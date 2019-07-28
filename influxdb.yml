@@ -1,0 +1,27 @@
+##########################################################################
+# 部署配置文件(base)
+# 本配置文件(xx.yml)中的变量(${xxx})是从同级目录下的.env文件中读取的
+##########################################################################
+# compose支持的版本2
+version: "2"
+services:
+  # influxdb
+  influxdb:
+    image: ${IMAGE_INFLUXDB}
+    container_name: "influxdb.${PRODUCT_NAME}.${COMPANY_NAME}"
+    hostname: "influxdb.${PRODUCT_NAME}.${COMPANY_NAME}"
+    restart: "always"
+    environment:
+      - INFLUXDB_DB=mydb
+      - INFLUXDB_ADMIN_ENABLED=true
+      - INFLUXDB_ADMIN_USER=admin 
+      - INFLUXDB_ADMIN_PASSWORD=Admin@123
+      - INFLUXDB_USER=test
+      - INFLUXDB_USER_PASSWORD=Test@123
+    volumes:
+      - /etc/localtime:/etc/localtime:ro
+      - ./volume/influxdb/data:/var/lib/influxdb:rw
+    network_mode: "host"
+    # cap_add:
+    #   - NET_ADMIN
+    #   - SYS_ADMIN

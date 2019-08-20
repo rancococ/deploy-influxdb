@@ -23,6 +23,8 @@ services:
       - /etc/localtime:/etc/localtime:ro
       - ./volume/influxdb/data:/var/lib/influxdb:rw
     network_mode: "host"
+    extra_hosts:
+      - "influxdb.${PRODUCT_NAME}.${COMPANY_NAME}:${HOST_IP}"
     # cap_add:
     #   - NET_ADMIN
     #   - SYS_ADMIN

@@ -6,18 +6,25 @@
 # --init   : 初始目录
 ##########################################################################
 
-# set -x
 set -e
-set -o noglob
 
-##########################################################################
+#
 # set author info
+#
 date1=`date "+%Y-%m-%d %H:%M:%S"`
 date2=`date "+%Y%m%d%H%M%S"`
 author="yong.ran@cdjdgm.com"
 
-##########################################################################
-# set font and color 
+#
+# envirionment
+#
+
+
+set -o noglob
+
+#
+# font and color 
+#
 bold=$(tput bold)
 underline=$(tput sgr 0 1)
 reset=$(tput sgr0)
@@ -28,12 +35,12 @@ yellow=$(tput setaf 3)
 blue=$(tput setaf 4)
 white=$(tput setaf 7)
 
-##########################################################################
+#
 # header and logging
-header() { printf "\n${underline}${bold}${blue}► %s${reset}\n" "$@"; }
-header2() { printf "\n${underline}${bold}${blue}♦ %s${reset}\n" "$@"; }
+#
+header() { printf "\n${underline}${bold}${blue}> %s${reset}\n" "$@"; }
+header2() { printf "\n${underline}${bold}${blue}>> %s${reset}\n" "$@"; }
 info() { printf "${white}➜ %s${reset}\n" "$@"; }
-info2() { printf "${red}➜ %s${reset}\n" "$@"; }
 warn() { printf "${yellow}➜ %s${reset}\n" "$@"; }
 error() { printf "${red}✖ %s${reset}\n" "$@"; }
 success() { printf "${green}✔ %s${reset}\n" "$@"; }
@@ -44,8 +51,9 @@ trap "error '******* Caught sigint signal. Stopping...*******'; exit 2" sigint
 
 set +o noglob
 
-##########################################################################
+#
 # entry base dir
+#
 pwd=`pwd`
 base_dir="${pwd}"
 source="$0"
@@ -55,21 +63,21 @@ while [ -h "$source" ]; do
     [[ $source != /* ]] && source="$base_dir/$source"
 done
 base_dir="$( cd -P "$( dirname "$source" )" && pwd )"
-cd ${base_dir}
+cd "${base_dir}"
 
-##########################################################################
-# envirionment
-img_dir=${base_dir}/images
-vol_dir=${base_dir}/volume
-
-# init args flag
+#
+# args flag
+#
 arg_help=
 arg_load=
 arg_init=
 arg_empty=true
 
-##########################################################################
+arg_package=
+
+#
 # parse parameter
+#
 # echo $@
 # 定义选项， -o 表示短选项 -a 表示支持长选项的简单模式(以 - 开头) -l 表示长选项 
 # a 后没有冒号，表示没有参数
@@ -81,7 +89,7 @@ arg_empty=true
 # $@ 从命令行取出参数列表(不能用用 $* 代替，因为 $* 将所有的参数解释成一个字符串
 #                         而 $@ 是一个参数数组)
 # args=`getopt -o ab:c:: -a -l apple,banana:,cherry:: -n "${source}" -- "$@"`
-args=`getopt -o h -a -l help,load,init -n "${source}" -- "$@"`
+args=`getopt -o h -a -l help,load:,init -n "${source}" -- "$@"`
 # 判定 getopt 的执行时候有错，错误信息输出到 STDERR
 if [ $? != 0 ]; then
     error "Terminating..." >&2
@@ -102,10 +110,11 @@ do
             shift
             ;;
         --load | -load)
-            info "option --load"
+            info "option --load argument : $2"
             arg_load=true
             arg_empty=false
-            shift
+            arg_package=$2
+            shift 2
             ;;
         --init | -init)
             info "option --init"
@@ -130,64 +139,54 @@ for arg do
 done
 
 # show usage
-usage=$"`basename $0` [-h|--help] [--load] [--init]
-       [-h|--help]         : show help info.
-       [--load]            : load images.
-       [--init]            : init volume.
+usage=$"`basename $0` [-h|--help] [--load=xxx.tgz] [--init]
+       [-h|--help]
+                       show help info.
+       [--load=xxx.tgz]
+                       load images.
+       [--init]
+                       init volume.
 "
 
 
-##########################################################################
 # load images
 fun_load_images() {
-    header "Load images"
-    if [ ! -d ${img_dir} ]; then
-        mkdir -p ${img_dir};
-    fi
-    info "Check for image files in [${img_dir}] directory."
-    if [ -e ${img_dir}/*.tar.gz ]; then
-        info "Find image file in [${img_dir}] directory.";
-        info "Load images start."
-        for imgfile in ${img_dir}/*.tar.gz; do
-            info "Load image : ${imgfile}"
-            docker load -i "${imgfile}";
-        done
-        success "Load images end."
-    else
-        warn "No image file found in [${img_dir}] directory.";
-    fi
+    header "load images : "
+    info "load image : ${arg_package}"
+    docker load -i "${arg_package}";
+    success "successfully loaded ${arg_package}"
     return 0
 }
 
 # init volume
 fun_init_volume() {
-    header "Init volume"
-    hasdata=$(find ${vol_dir} -type d -name data | wc -w)
-    haslogs=$(find ${vol_dir} -type d -name logs | wc -w)
-    hastemp=$(find ${vol_dir} -type d -name temp | wc -w)
+    header "init volume : "
+    hasdata=$(find "${base_dir}/volume" -type d -name data | wc -w)
+    haslogs=$(find "${base_dir}/volume" -type d -name logs | wc -w)
+    hastemp=$(find "${base_dir}/volume" -type d -name temp | wc -w)
     if [ ${hasdata} -gt 0 ]; then
-        info "Init data volume start."
-        for datadir in `find ${vol_dir} -type d -name data`; do
-            info "Init volume : ${datadir}"
+        info "init data volume start."
+        for datadir in `find "${base_dir}/volume" -type d -name data`; do
+            info "init data volume : ${datadir}"
             chmod -R 777 ${datadir};
         done
-        success "Init data volume end."
+        success "successfully initialized data volume"
     fi
     if [ ${haslogs} -gt 0 ]; then
-        info "Init logs volume start."
-        for logsdir in `find ${vol_dir} -type d -name logs`; do
-            info "Init volume : ${logsdir}"
+        info "init logs volume start."
+        for logsdir in `find "${base_dir}/volume" -type d -name logs`; do
+            info "init logs volume : ${logsdir}"
             chmod -R 777 ${logsdir};
         done
-        success "Init logs volume end."
+        success "successfully initialized logs volume"
     fi
     if [ ${hastemp} -gt 0 ]; then
-        info "Init temp volume start."
-        for tempdir in `find ${vol_dir} -type d -name temp`; do
-            info "Init volume : ${tempdir}"
+        info "init temp volume start."
+        for tempdir in `find "${base_dir}/volume" -type d -name temp`; do
+            info "init temp volume : ${tempdir}"
             chmod -R 777 ${tempdir};
         done
-        success "Init temp volume end."
+        success "successfully initialized temp volume"
     fi
     return 0
 }
@@ -207,16 +206,20 @@ if [ "x${arg_help}" == "xtrue" ]; then
     exit 1
 fi
 
-# load
+# load images
 if [ "x${arg_load}" == "xtrue" ]; then
+    if [ ! -f ${arg_package} ]; then
+        usage "$usage";
+        exit 1
+    fi
     fun_load_images;
 fi
 
-# init
+# init volume
 if [ "x${arg_init}" == "xtrue" ]; then
     fun_init_volume;
 fi
 
-success "complete."
+echo ""
 
 exit $?

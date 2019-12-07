@@ -58,15 +58,25 @@ while [ -h "$source" ]; do
     [[ $source != /* ]] && source="$base_dir/$source"
 done
 base_dir="$( cd -P "$( dirname "$source" )" && pwd )"
-cd ${base_dir}
+cd "${base_dir}"
 
 ##########################################################################
 # envirionment
-self_name=`basename $0  .sh`
+if [ -r "${base_dir}/.env" ]; then
+    while read line; do
+        eval "$line";
+    done < "${base_dir}/.env"
+fi
+self_name=`basename $0 .sh`
+parent_name=`basename "${base_dir}"`
 compose_bin=/usr/local/bin/docker-compose
 compose_yml=${base_dir}/${self_name}.yml
 project_dir=${base_dir}
-project_name=${self_name}
+if [ -z "${PRODUCT_NAME}" ]; then
+    project_name=${parent_name}
+else 
+    project_name=${PRODUCT_NAME}-${SERVICE_NAME}
+fi
 
 # init args flag
 arg_help=
@@ -171,10 +181,10 @@ usage=$"`basename $0` [-h|--help] [--setup] [--start] [--stop] [--down] [--list]
 # execute docker-compose command
 fun_execute_compose_command() {
     command=$1
-    header "execute command:[docker-compose --file ${compose_yml} ${command}]"
-    info "execute command [docker-compose --file ${compose_yml} ${command}] start."
+    header "execute command:[docker-compose --file ${compose_yml} --project-name ${project_name} --project-directory ${project_dir} ${command}]"
+    info "execute command [docker-compose --file ${compose_yml} --project-name ${project_name} --project-directory ${project_dir} ${command}] start."
     ${compose_bin} --file ${compose_yml} --project-name ${project_name} --project-directory ${project_dir} ${command}
-    success "execute command [docker-compose --file ${compose_yml} ${command}] end."
+    success "execute command [docker-compose --file ${compose_yml} --project-name ${project_name} --project-directory ${project_dir} ${command}] end."
     return 0
 }
 

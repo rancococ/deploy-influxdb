@@ -7,7 +7,7 @@ version: "2"
 services:
   # influxdb
   influxdb:
-    image: ${IMAGE_INFLUXDB}
+    image: ${IMAGE_REPO}/${IMAGE_INFLUXDB}
     container_name: "influxdb.${PRODUCT_NAME}.${COMPANY_NAME}"
     hostname: "influxdb.${PRODUCT_NAME}.${COMPANY_NAME}"
     restart: "always"

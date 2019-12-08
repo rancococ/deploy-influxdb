@@ -75,7 +75,7 @@ project_dir=${base_dir}
 if [ -z "${PRODUCT_NAME}" ]; then
     project_name=${parent_name}
 else 
-    project_name=${PRODUCT_NAME}-${SERVICE_NAME}
+    project_name=${PRODUCT_NAME}
 fi
 
 # init args flag

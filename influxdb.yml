@@ -12,7 +12,7 @@ services:
     hostname: "influxdb.${PRODUCT_NAME}.${COMPANY_NAME}"
     restart: "always"
     environment:
-      - INFLUXDB_DB=mydb
+      - INFLUXDB_DB=test
       - INFLUXDB_HTTP_AUTH_ENABLED=true
       - INFLUXDB_ADMIN_ENABLED=true
       - INFLUXDB_ADMIN_USER=admin 
